@@ -24,9 +24,52 @@ const userSchema = new mongoose.Schema({
     minlength: [6, 'Mật khẩu phải có ít nhất 6 ký tự'],
     select: false
   },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  subscription: {
+    packageId: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Package'
+    },
+    startDate: Date,
+    endDate: Date,
+    isActive: {
+      type: Boolean,
+      default: false
+    },
+    isLifetime: {
+      type: Boolean,
+      default: false
+    }
+  },
+  usageHistory: [{
+    serviceId: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Service'
+    },
+    usedAt: {
+      type: Date,
+      default: Date.now
+    },
+    details: mongoose.Schema.Types.Mixed
+  }],
+  avatar: String,
+  phone: String,
+  lastLogin: Date,
   resetPasswordToken: String,
   resetPasswordExpire: Date,
   createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
     type: Date,
     default: Date.now
   }

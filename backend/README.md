@@ -11,6 +11,14 @@ Node.js backend API for JINZMedia application with authentication, MongoDB, and 
   - Protected routes with JWT authentication
   - Password strength validation
 
+- **File Upload System**
+  - Package image uploads (5MB limit)
+  - Service image uploads (5MB limit)
+  - Service tutorial video uploads (100MB limit)
+  - Automatic file cleanup
+  - File type validation
+  - Secure file storage
+
 - **Security**
   - Bcrypt password hashing
   - JWT token authentication
@@ -44,6 +52,7 @@ Node.js backend API for JINZMedia application with authentication, MongoDB, and 
 - **Authentication**: JWT (JSON Web Tokens)
 - **Password Hashing**: bcryptjs
 - **Email**: Nodemailer (SMTP)
+- **File Upload**: Multer
 - **Validation**: express-validator
 - **Security**: Helmet, CORS, Rate Limiting
 - **Documentation**: Swagger/OpenAPI 3.0
@@ -54,19 +63,33 @@ Node.js backend API for JINZMedia application with authentication, MongoDB, and 
 backend/
 ├── src/
 │   ├── config/
-│   │   └── database.js          # MongoDB connection
+│   │   ├── database.js          # MongoDB connection
+│   │   └── swagger.js           # Swagger configuration
 │   ├── controllers/
-│   │   └── authController.js    # Authentication logic
+│   │   ├── authController.js    # Authentication logic
+│   │   ├── adminPackageController.js  # Package management
+│   │   └── adminServiceController.js   # Service management
 │   ├── middleware/
 │   │   ├── auth.js             # JWT authentication
 │   │   ├── validation.js       # Input validation
-│   │   └── errorHandler.js     # Error handling
+│   │   ├── errorHandler.js     # Error handling
+│   │   ├── fileUpload.js      # Package image upload
+│   │   └── serviceFileUpload.js # Service file upload
 │   ├── models/
-│   │   └── User.js             # User model/schema
+│   │   ├── User.js             # User model/schema
+│   │   ├── Package.js          # Package model/schema
+│   │   └── Service.js          # Service model/schema
 │   ├── routes/
-│   │   └── authRoutes.js       # Authentication routes
+│   │   ├── authRoutes.js       # Authentication routes
+│   │   ├── adminPackageRoutes.js # Package management routes
+│   │   └── adminServiceRoutes.js  # Service management routes
 │   └── services/
 │       └── emailService.js     # Email functionality
+├── uploads/                    # File upload directory
+│   ├── packages/              # Package images
+│   └── services/              # Service files
+│       ├── images/           # Service images
+│       └── videos/           # Service tutorial videos
 ├── app.js                      # Express app configuration
 ├── server.js                   # Server startup
 ├── package.json               # Dependencies
@@ -193,151 +216,217 @@ The Swagger UI provides:
 | PUT | `/api/auth/resetpassword/:resettoken` | Reset password | Public |
 | PUT | `/api/auth/updatepassword` | Update password | Private |
 
-### Health Check
+### Admin Dashboard Routes
 
 | Method | Endpoint | Description | Access |
 |--------|----------|-------------|---------|
-| GET | `/api/health` | Check API status | Public |
+| GET | `/api/admin/dashboard` | Get admin dashboard overview | Admin |
 
-## API Usage Examples
+### Admin User Management Routes
 
-### 1. Register User
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|---------|
+| GET | `/api/admin/users` | Get all users | Admin |
+| GET | `/api/admin/users/:id` | Get user by ID | Admin |
+| POST | `/api/admin/users` | Create new user | Admin |
+| PUT | `/api/admin/users/:id` | Update user | Admin |
+| DELETE | `/api/admin/users/:id` | Delete user | Admin |
+| PUT | `/api/admin/users/:id/status` | Update user status | Admin |
+| PUT | `/api/admin/users/:id/role` | Update user role | Admin |
 
-```bash
+### Admin Package Management Routes
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|---------|
+| GET | `/api/admin/packages` | Get all packages | Admin |
+| GET | `/api/admin/packages/:id` | Get package by ID | Admin |
+| POST | `/api/admin/packages` | Create new package | Admin |
+| PUT | `/api/admin/packages/:id` | Update package | Admin |
+| DELETE | `/api/admin/packages/:id` | Delete package | Admin |
+| PATCH | `/api/admin/packages/:id/toggle-status` | Toggle package status | Admin |
+
+#### Create Package with Image
+```http
+POST /api/admin/packages
+Content-Type: multipart/form-data
+
+name: "Package Name"
+description: "Package Description"
+type: "monthly"
+price: 99.99
+image: [file] // Optional, max 5MB, image files only
+```
+
+### Admin Service Management Routes
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|---------|
+| GET | `/api/admin/services` | Get all services | Admin |
+| GET | `/api/admin/services/:id` | Get service by ID | Admin |
+| POST | `/api/admin/services` | Create new service | Admin |
+| PUT | `/api/admin/services/:id` | Update service | Admin |
+| DELETE | `/api/admin/services/:id` | Delete service | Admin |
+| PATCH | `/api/admin/services/:id/toggle-status` | Toggle service status | Admin |
+
+#### Create Service with Files
+```http
+POST /api/admin/services
+Content-Type: multipart/form-data
+
+name: "Service Name"
+description: "Service Description"
+type: "basic"
+category: "category"
+permission: "permission"
+image: [file] // Optional, max 5MB, image files only
+tutorialVideo: [file] // Optional, max 100MB, video files only
+```
+
+#### Update Service with Files
+```http
+PUT /api/admin/services/:id
+Content-Type: multipart/form-data
+
+name: "Updated Service Name"
+image: [file] // Optional, will replace existing image
+tutorialVideo: [file] // Optional, will replace existing video
+```
+
+## API Request & Response Examples
+
+### Authentication
+
+#### Register User
+```http
 POST /api/auth/register
 Content-Type: application/json
 
 {
-  "name": "Nguyễn Văn A",
-  "email": "user@example.com",
-  "password": "Password123"
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securePassword123"
 }
 ```
 
-**Response:**
+Response:
 ```json
 {
   "success": true,
-  "message": "Đăng ký thành công",
-  "token": "jwt_token_here",
-  "data": {
-    "_id": "user_id",
-    "name": "Nguyễn Văn A",
-    "email": "user@example.com",
-    "createdAt": "2024-01-01T00:00:00.000Z"
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "60d3b41f7c213e3c50507d9d",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "user"
   }
 }
 ```
 
-### 2. Login User
-
-```bash
+#### Login User
+```http
 POST /api/auth/login
 Content-Type: application/json
 
 {
-  "email": "user@example.com",
-  "password": "Password123"
+  "email": "john@example.com",
+  "password": "securePassword123"
 }
 ```
 
-**Response:**
+Response:
 ```json
 {
   "success": true,
-  "message": "Đăng nhập thành công",
-  "token": "jwt_token_here",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Admin Dashboard
+
+#### Get Dashboard Overview
+```http
+GET /api/admin/dashboard
+Authorization: Bearer <token>
+```
+
+Response:
+```json
+{
+  "success": true,
   "data": {
-    "_id": "user_id",
-    "name": "Nguyễn Văn A",
-    "email": "user@example.com",
-    "createdAt": "2024-01-01T00:00:00.000Z"
+    "totalUsers": 150,
+    "totalPackages": 5,
+    "totalServices": 10,
+    "activeSubscriptions": 75,
+    "recentUsers": [...],
+    "popularServices": [...],
+    "revenue": {
+      "totalRevenue": 15000,
+      "monthlyRevenue": 5000,
+      "yearlyRevenue": 8000,
+      "lifetimeRevenue": 2000
+    }
   }
 }
 ```
 
-### 3. Get Current User (Protected)
+### Package Management
 
-```bash
-GET /api/auth/me
-Authorization: Bearer jwt_token_here
+#### Create Package
+```http
+POST /api/admin/packages
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "Premium Package",
+  "description": "Advanced features for power users",
+  "price": 99.99,
+  "type": "monthly",
+  "features": ["feature1", "feature2", "feature3"],
+  "status": "active"
+}
 ```
 
-**Response:**
+Response:
 ```json
 {
   "success": true,
   "data": {
-    "_id": "user_id",
-    "name": "Nguyễn Văn A",
-    "email": "user@example.com",
-    "createdAt": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-### 4. Forgot Password
-
-```bash
-POST /api/auth/forgotpassword
-Content-Type: application/json
-
-{
-  "email": "user@example.com"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": "Email đặt lại mật khẩu đã được gửi"
-}
-```
-
-### 5. Reset Password
-
-```bash
-PUT /api/auth/resetpassword/reset_token_from_email
-Content-Type: application/json
-
-{
-  "password": "NewPassword123"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Đặt lại mật khẩu thành công",
-  "token": "new_jwt_token_here",
-  "data": {
-    "_id": "user_id",
-    "name": "Nguyễn Văn A",
-    "email": "user@example.com",
-    "createdAt": "2024-01-01T00:00:00.000Z"
+    "id": "60d3b41f7c213e3c50507d9e",
+    "name": "Premium Package",
+    "description": "Advanced features for power users",
+    "price": 99.99,
+    "type": "monthly",
+    "features": ["feature1", "feature2", "feature3"],
+    "status": "active"
   }
 }
 ```
 
 ## Error Responses
 
-All error responses follow this format:
+All endpoints follow a consistent error response format:
 
 ```json
 {
   "success": false,
-  "error": "Error message in Vietnamese"
+  "error": {
+    "message": "Error message here",
+    "code": "ERROR_CODE",
+    "statusCode": 400
+  }
 }
 ```
 
-Common HTTP status codes:
-- `400` - Bad Request (validation errors)
-- `401` - Unauthorized (authentication required)
-- `404` - Not Found
-- `429` - Too Many Requests (rate limited)
-- `500` - Internal Server Error
+Common HTTP Status Codes:
+- 200: Success
+- 201: Created
+- 400: Bad Request
+- 401: Unauthorized
+- 403: Forbidden
+- 404: Not Found
+- 500: Internal Server Error
 
 ## Validation Rules
 
@@ -416,3 +505,44 @@ For questions or issues, please create an issue in the project repository or con
 ## License
 
 This project is licensed under the ISC License. 
+
+## File Upload Guidelines
+
+### Supported File Types
+
+**Images (Packages & Services)**
+- JPEG/JPG
+- PNG
+- GIF
+- WebP
+
+**Videos (Service Tutorials)**
+- MP4
+- WebM
+- MKV
+- MOV
+
+### File Size Limits
+
+- Package Images: 5MB
+- Service Images: 5MB
+- Service Tutorial Videos: 100MB
+
+### File Storage
+
+All uploaded files are stored in the `uploads` directory:
+- Package images: `uploads/packages/`
+- Service images: `uploads/services/images/`
+- Service videos: `uploads/services/videos/`
+
+Files are automatically cleaned up when:
+- A package/service is deleted
+- An image/video is replaced with a new one
+- Upload fails during creation/update
+
+### File Access
+
+Uploaded files are served statically and can be accessed via:
+- Package images: `/uploads/packages/package-[timestamp].ext`
+- Service images: `/uploads/services/images/service-image-[timestamp].ext`
+- Service videos: `/uploads/services/videos/service-tutorialVideo-[timestamp].ext` 

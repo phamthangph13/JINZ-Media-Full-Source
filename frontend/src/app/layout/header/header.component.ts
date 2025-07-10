@@ -1,6 +1,8 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
     selector: 'app-header',
@@ -105,21 +107,21 @@ import { RouterModule } from '@angular/router';
               data-bs-toggle="dropdown"
               aria-expanded="false">
               <img 
-                [src]="currentUser.avatar || 'assets/images/default-avatar.png'" 
-                [alt]="currentUser.name"
+                [src]="currentUser?.avatar || 'assets/images/default-avatar.png'" 
+                [alt]="currentUser?.name || 'User'"
                 class="user-avatar">
-              <span class="user-info d-none d-md-inline-block">
+              <span class="user-info d-none d-md-inline-block" *ngIf="currentUser">
                 <span class="user-name">{{ currentUser.name }}</span>
-                <span class="user-role">{{ currentUser.role }}</span>
+                <span class="user-role">{{ currentUser.role === 'admin' ? 'Admin' : 'User' }}</span>
               </span>
               <i class="fas fa-chevron-down ms-2"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end user-menu">
               <li class="dropdown-header">
-                <div class="user-details">
+                <div class="user-details" *ngIf="currentUser">
                   <img 
-                    [src]="currentUser.avatar || 'assets/images/default-avatar.png'" 
-                    [alt]="currentUser.name"
+                    [src]="currentUser?.avatar || 'assets/images/default-avatar.png'" 
+                    [alt]="currentUser?.name || 'User'"
                     class="user-avatar-large">
                   <div class="user-text">
                     <div class="user-name">{{ currentUser.name }}</div>
@@ -145,7 +147,7 @@ import { RouterModule } from '@angular/router';
               </li>
               <li><hr class="dropdown-divider"></li>
               <li>
-                <a class="dropdown-item text-danger" (click)="profileMenuClick.emit('logout')">
+                <a class="dropdown-item text-danger" (click)="logout()">
                   <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
                 </a>
               </li>
@@ -157,19 +159,26 @@ import { RouterModule } from '@angular/router';
   `,
     styleUrls: ['./header.component.scss']
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   @Output() toggleSidebar = new EventEmitter<void>();
   @Output() profileMenuClick = new EventEmitter<string>();
 
   currentPageTitle = 'Tổng quan';
   notificationCount = 3;
+  currentUser: any = null;
 
-  currentUser = {
-    name: 'Admin User',
-    email: 'admin@jinzmedia.com',
-    role: 'Super Admin',
-    avatar: ''
-  };
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private toastr: ToastrService
+  ) {}
+
+  ngOnInit(): void {
+    // Subscribe to current user changes
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+  }
 
   notifications = [
     {
@@ -207,5 +216,11 @@ export class HeaderComponent {
       notification.read = true;
     });
     this.notificationCount = 0;
+  }
+
+  logout() {
+    this.authService.logout();
+    this.toastr.success('Đăng xuất thành công');
+    this.router.navigate(['/auth']);
   }
 } 

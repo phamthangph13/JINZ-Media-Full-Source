@@ -1,10 +1,26 @@
 const dotenv = require('dotenv');
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
 
 // Load env vars
 dotenv.config();
 
 const app = require('./app');
 const connectDB = require('./src/config/database');
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+const packagesDir = path.join(uploadsDir, 'packages');
+const servicesDir = path.join(uploadsDir, 'services');
+const servicesImagesDir = path.join(servicesDir, 'images');
+const servicesVideosDir = path.join(servicesDir, 'videos');
+
+[uploadsDir, packagesDir, servicesDir, servicesImagesDir, servicesVideosDir].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 // Connect to database
 connectDB();

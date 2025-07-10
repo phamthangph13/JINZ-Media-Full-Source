@@ -102,23 +102,7 @@ export class SidebarComponent {
     {
       label: 'Quản lí người dùng',
       icon: 'fas fa-users',
-      children: [
-        {
-          label: 'Danh sách người dùng',
-          icon: 'fas fa-list',
-          route: '/admin/users/list'
-        },
-        {
-          label: 'Thêm người dùng',
-          icon: 'fas fa-user-plus',
-          route: '/admin/users/add'
-        },
-        {
-          label: 'Vai trò & Quyền',
-          icon: 'fas fa-user-shield',
-          route: '/admin/users/roles'
-        }
-      ]
+      route: '/admin/users/list'
     },
     {
       label: 'Quản lí các gói',

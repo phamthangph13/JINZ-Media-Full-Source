@@ -6,9 +6,11 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./src/config/swagger');
+const path = require('path');
 
 // Import routes
 const authRoutes = require('./src/routes/authRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 
 // Import middleware
 const errorHandler = require('./src/middleware/errorHandler');
@@ -27,7 +29,7 @@ app.use(helmet());
 
 // CORS
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
   credentials: true
 }));
 
@@ -79,8 +81,12 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Mount routers
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Handle undefined routes
 app.all('*', (req, res) => {

@@ -204,6 +204,86 @@ const options = {
               example: 'development'
             }
           }
+        },
+        Service: {
+          type: 'object',
+          required: ['name', 'permission', 'category'],
+          properties: {
+            _id: {
+              type: 'string',
+              description: 'Unique identifier for the service',
+              example: '507f1f77bcf86cd799439011'
+            },
+            name: {
+              type: 'string',
+              description: 'Name of the service (1-100 characters)',
+              example: 'Video Editor Pro',
+              maxLength: 100
+            },
+            description: {
+              type: 'string',
+              description: 'Service description (max 1000 characters)',
+              example: 'Professional video editing tool with advanced features',
+              maxLength: 1000
+            },
+            permission: {
+              type: 'string',
+              description: 'Permission identifier in format perm.category.action',
+              example: 'perm.video.editor',
+              pattern: '^perm\\.[a-z]+\\.[a-z]+$'
+            },
+            category: {
+              type: 'string',
+              description: 'Service category',
+              enum: ['video', 'image', 'audio', 'document', 'utility', 'ai', 'other'],
+              example: 'video'
+            },
+            type: {
+              type: 'string',
+              description: 'Service type',
+              enum: ['free', 'premium', 'enterprise'],
+              example: 'premium'
+            },
+            pricing: {
+              type: 'object',
+              properties: {
+                isFree: {
+                  type: 'boolean',
+                  description: 'Whether the service is free',
+                  example: false
+                },
+                pricePerUse: {
+                  type: 'number',
+                  description: 'Price per use (required if not free)',
+                  example: 10000,
+                  minimum: 0
+                },
+                currency: {
+                  type: 'string',
+                  description: 'Currency for pricing',
+                  enum: ['VND', 'USD'],
+                  example: 'VND'
+                }
+              }
+            },
+            isActive: {
+              type: 'boolean',
+              description: 'Whether the service is active',
+              example: true
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Service creation timestamp',
+              example: '2024-01-01T00:00:00.000Z'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Service last update timestamp',
+              example: '2024-01-01T00:00:00.000Z'
+            }
+          }
         }
       }
     },
@@ -215,6 +295,22 @@ const options = {
       {
         name: 'Health',
         description: 'API health check endpoints'
+      },
+      {
+        name: 'Admin - Dashboard',
+        description: 'Admin dashboard and overview endpoints'
+      },
+      {
+        name: 'Admin - Users',
+        description: 'Admin user management endpoints'
+      },
+      {
+        name: 'Admin - Packages',
+        description: 'Admin package management endpoints'
+      },
+      {
+        name: 'Admin - Services',
+        description: 'Admin service management endpoints'
       }
     ]
   },

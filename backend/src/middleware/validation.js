@@ -92,5 +92,6 @@ module.exports = {
   validateForgotPassword,
   validateResetPassword,
   validateUpdatePassword,
-  handleValidationErrors
+  handleValidationErrors,
+  validateRequest: handleValidationErrors
 }; 

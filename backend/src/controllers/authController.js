@@ -87,6 +87,10 @@ const login = async (req, res) => {
       });
     }
 
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save({ validateBeforeSave: false });
+
     sendTokenResponse(user, 200, res, 'Đăng nhập thành công');
   } catch (error) {
     console.error('Login error:', error);
@@ -307,6 +311,11 @@ const sendTokenResponse = (user, statusCode, res, message) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        avatar: user.avatar,
+        phone: user.phone,
+        lastLogin: user.lastLogin,
         createdAt: user.createdAt
       }
     });

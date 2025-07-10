@@ -1,9 +1,10 @@
 import { Routes } from '@angular/router';
+import { AdminGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/admin/dashboard',
+    redirectTo: '/auth',
     pathMatch: 'full'
   },
   {
@@ -13,6 +14,7 @@ export const routes: Routes = [
   {
     path: 'admin',
     loadComponent: () => import('./layout/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
+    canActivate: [AdminGuard],
     children: [
       {
         path: '',
@@ -31,12 +33,9 @@ export const routes: Routes = [
             loadComponent: () => import('./features/user-management/user-list/user-list.component').then(m => m.UserListComponent)
           },
           {
-            path: 'add',
-            loadComponent: () => import('./features/user-management/user-add/user-add.component').then(m => m.UserAddComponent)
-          },
-          {
-            path: 'roles',
-            loadComponent: () => import('./features/user-management/user-roles/user-roles.component').then(m => m.UserRolesComponent)
+            path: '',
+            redirectTo: 'list',
+            pathMatch: 'full'
           }
         ]
       },
