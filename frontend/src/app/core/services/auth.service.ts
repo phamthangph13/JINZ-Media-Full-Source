@@ -76,7 +76,29 @@ export class AuthService {
   isAuthenticated(): boolean {
     const token = this.getToken();
     const user = this.getCurrentUser();
-    return !!token && !!user;
+    
+    if (!token || !user) {
+      return false;
+    }
+    
+    // Check if token is expired
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expirationTime = payload.exp * 1000; // Convert to milliseconds
+      const now = Date.now();
+      
+      if (expirationTime <= now) {
+        // Token expired, logout
+        this.logout();
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      // Invalid token format, logout
+      this.logout();
+      return false;
+    }
   }
 
   // Check if user is admin
@@ -111,6 +133,17 @@ export class AuthService {
         this.logout();
       }
     }
+  }
+
+  // Get authentication status message for UI
+  getAuthStatusMessage(): string {
+    if (!this.isAuthenticated()) {
+      return 'Vui lòng đăng nhập để tiếp tục';
+    }
+    if (!this.isAdmin()) {
+      return 'Bạn cần quyền admin để truy cập trang này';
+    }
+    return '';
   }
 
   // Auto-logout when token expires
